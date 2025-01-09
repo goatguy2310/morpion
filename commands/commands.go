@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -17,13 +16,13 @@ func Ping(s *discordgo.Session, m *discordgo.MessageCreate, _ []string) {
 }
 
 func Help(s *discordgo.Session, m *discordgo.MessageCreate, _ []string) {
-	fileName := "vinner.jpg"
+	// fileName := "vinner.jpg"
 
-	f, err := os.Open(fileName)
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
+	// f, err := os.Open(fileName)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// defer f.Close()
 
 	ms := &discordgo.MessageSend{
 		Embed: &discordgo.MessageEmbed{
@@ -31,18 +30,9 @@ func Help(s *discordgo.Session, m *discordgo.MessageCreate, _ []string) {
 			Fields: []*discordgo.MessageEmbedField{
 				{
 					Name:   "Codeforces Tictactoe",
-					Value:  "start\nupdate\nend",
+					Value:  "- `help`: Display the help message\n- `challenge` `@opponent` `your handle` `opponent's handle` `rating` `+tags` `~tags`: Challenge the `@opponent` to a tictactoe duel, with the given rating (leave empty for any rating), and criteria for tags included (+) and tags excluded (~)\n- `accept`: Accept a challenge if you are being challenged\n- `end`: End a challenge or an ongoing duel\n- `update`: Update the current duel, which will update the board if the duelists solve more problems. Should be manually called from time to time.",
 					Inline: true,
 				},
-			},
-			Image: &discordgo.MessageEmbedImage{
-				URL: "attachment://" + fileName,
-			},
-		},
-		Files: []*discordgo.File{
-			{
-				Name:   fileName,
-				Reader: f,
 			},
 		},
 	}
