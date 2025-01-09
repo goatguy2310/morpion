@@ -1,8 +1,8 @@
 # Tictactoe Codeforces
-A discord bot built for hosting tictactoe games between two players making moves by solving codeforces problems. Inspired by the bot NeoTLE, I wanted to write my own version of codeforces duel in the form of tictactoe games.
+A discord bot built with Go that allows two players to play tic-tac-toe by solving codeforces problems. Inspired by the bot NeoTLE, I wanted to create my own version of a codeforces duel bot in the form of tic-tac-toe games.
 
 # How the game works
-By challenging the other player alongside giving your handles, the bot will randomly choose 9 problems from the competitive programming website codeforces that matches with the criteria that you give it. (i.e. 2000 +constructive-algorithms +dp ~flows) 
+By challenging the other player alongside giving your handles, the bot will randomly choose 9 problems from the competitive programming platform Codeforces based on the the criteria specified (i.e. 2000 +constructive-algorithms +dp ~flows).
 
 ![image](https://github.com/user-attachments/assets/a20e002f-d231-4aa4-a278-6476d0d59a0b)
 
