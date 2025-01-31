@@ -1,4 +1,4 @@
-# Tictactoe Codeforces
+# Morpion Codeforces
 A discord bot built with Go that allows two players to play tic-tac-toe by solving codeforces problems. Inspired by the bot NeoTLE, I wanted to create my own version of a codeforces duel bot in the form of tic-tac-toe games.
 
 # How the game works
