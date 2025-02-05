@@ -11,6 +11,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"arono/commands"
+	"arono/db"
 	"arono/util"
 )
 
@@ -18,6 +19,8 @@ const prefix string = "~"
 
 var challengeMap util.ChallengeMap = util.ChallengeMap{Map: make(map[string][]string)}
 var duelMap util.DuelMap = util.DuelMap{Map: make(map[string]util.GameState)}
+
+var dbConn db.DBConn = db.NewDBConnection("arono.db")
 
 func main() {
 	godotenv.Load(".env")
@@ -37,13 +40,16 @@ func main() {
 }
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
+	// ignore if the message is from itself or doesn't start with the prefix
 	if m.Author.ID == s.State.User.ID || !strings.HasPrefix(m.Content, prefix) {
 		return
 	}
 
+	// extracting the command and the args after it
 	contentSplit := strings.Split(m.Content, " ")
 	command, rawArgs := contentSplit[0][1:], contentSplit[1:]
 
+	// splitting and appending to the array
 	var args []string
 	for _, a := range rawArgs {
 		if a != "" {
@@ -51,13 +57,19 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 	}
 
+	// switch case for the commands
+	// (this has to be done because go doesn't allow dynamic function calls)
 	switch command {
 	case "ping":
 		commands.Ping(s, m, args)
 	case "help":
 		commands.Help(s, m, args)
+	case "register":
+		commands.Register(s, m, args, &dbConn)
+	case "handle":
+		commands.Handle(s, m, args, &dbConn)
 	case "challenge":
-		commands.Challenge(s, m, args, &duelMap, &challengeMap)
+		commands.Challenge(s, m, args, &duelMap, &challengeMap, &dbConn)
 	case "accept":
 		commands.Accept(s, m, args, &duelMap, &challengeMap)
 	case "end":

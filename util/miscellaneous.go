@@ -6,6 +6,7 @@ import (
 	"math/rand"
 )
 
+// map of all codeforces tags
 var codeforcesTag map[string]int = map[string]int{
 	"implementation":            0,
 	"math":                      0,
@@ -46,6 +47,7 @@ var codeforcesTag map[string]int = map[string]int{
 	"schedules":                 0,
 }
 
+// check if a given tag array is a subset of codeforces tags
 func TagSubset(a []string) bool {
 	for _, i := range a {
 		if _, exists := codeforcesTag[i]; !exists {
@@ -55,6 +57,7 @@ func TagSubset(a []string) bool {
 	return true
 }
 
+// parse the args into includeTags and excludeTags
 func Parse(args []string) ([]string, []string, bool) {
 	var includeTags, excludeTags []string
 	for _, tag := range args {
@@ -71,6 +74,7 @@ func Parse(args []string) ([]string, []string, bool) {
 	return includeTags, excludeTags, true
 }
 
+// get a random sample of cnt elements from s
 func RandomSample[T any](s []T, cnt int) ([]T, bool) {
 	if cnt > len(s) {
 		return nil, false
@@ -85,6 +89,7 @@ func RandomSample[T any](s []T, cnt int) ([]T, bool) {
 	return res, true
 }
 
+// check if the tictactoe game is over and who wins
 // 1 is X, 2 is O
 func IsGameOver(board []int) (bool, bool) {
 	win := []bool{false, false}

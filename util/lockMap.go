@@ -1,3 +1,6 @@
+// This file contains the structs and methods for the maps with lock features (challenge, duel)
+// and miscellanous structs (gamestate, problem, submission)
+
 package util
 
 import "sync"

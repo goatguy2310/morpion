@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"database/sql"
 	"fmt"
 	"strconv"
 	"strings"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 
+	"arono/db"
 	"arono/util"
 )
 
@@ -30,7 +32,7 @@ func Help(s *discordgo.Session, m *discordgo.MessageCreate, _ []string) {
 			Fields: []*discordgo.MessageEmbedField{
 				{
 					Name:   "Codeforces Tictactoe",
-					Value:  "- `help`: Display the help message\n- `challenge` `@opponent` `your handle` `opponent's handle` `rating` `+tags` `~tags`: Challenge the `@opponent` to a tictactoe duel, with the given rating (leave empty for any rating), and criteria for tags included (+) and tags excluded (~)\n- `accept`: Accept a challenge if you are being challenged\n- `end`: End a challenge or an ongoing duel\n- `update`: Update the current duel, which will update the board if the duelists solve more problems. Should be manually called from time to time.",
+					Value:  "- `help`: Display the help message\n- `register` `codeforces_handle`: Register a codeforces handle for yourself\n- `handle`: Show your handle\n- `challenge` `@opponent` `rating (optional)` `+tags (optional)` `~tags (optional)`: Challenge the `@opponent` to a tictactoe duel, with the given rating (leave empty for any rating), and criteria for tags included (+) and tags excluded (~)\n- `accept`: Accept a challenge if you are being challenged\n- `end`: End a challenge or an ongoing duel\n- `update`: Update the current duel, which will update the board if the duelists solve more problems. Should be manually called from time to time.",
 					Inline: true,
 				},
 			},
@@ -40,8 +42,40 @@ func Help(s *discordgo.Session, m *discordgo.MessageCreate, _ []string) {
 	s.ChannelMessageSendComplex(m.ChannelID, ms)
 }
 
-func Challenge(s *discordgo.Session, m *discordgo.MessageCreate, args []string, duelMap *util.DuelMap, challengeMap *util.ChallengeMap) {
-	if len(args) < 3 {
+func Register(s *discordgo.Session, m *discordgo.MessageCreate, args []string, dbConn *db.DBConn) {
+	if len(args) != 1 {
+		s.ChannelMessageSend(m.ChannelID, "Invalid handle")
+		return
+	}
+
+	handle := args[0]
+	// print
+	fmt.Println(handle)
+
+	if !util.UserExists([]string{handle}) {
+		s.ChannelMessageSend(m.ChannelID, "Handle doesn't exist")
+		return
+	}
+
+	err := dbConn.UpdateUserHandle(m.Author.ID, handle)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, err.Error())
+		return
+	}
+	s.ChannelMessageSend(m.ChannelID, "Handle `"+handle+"` registered for <@"+m.Author.ID+">")
+}
+
+func Handle(s *discordgo.Session, m *discordgo.MessageCreate, args []string, dbConn *db.DBConn) {
+	handle, err := dbConn.GetUserHandle(m.Author.ID)
+	if err == sql.ErrNoRows {
+		s.ChannelMessageSend(m.ChannelID, "You don't have a handle registered. Use the command `~register` `your_handle` to register a codeforces handle")
+		return
+	}
+	s.ChannelMessageSend(m.ChannelID, "Your handle is `"+handle+"`")
+}
+
+func Challenge(s *discordgo.Session, m *discordgo.MessageCreate, args []string, duelMap *util.DuelMap, challengeMap *util.ChallengeMap, dbConn *db.DBConn) {
+	if len(args) == 0 {
 		s.ChannelMessageSend(m.ChannelID, "Missing an opponent")
 		return
 	}
@@ -87,16 +121,28 @@ func Challenge(s *discordgo.Session, m *discordgo.MessageCreate, args []string, 
 		return
 	}
 
+	handle1, err := dbConn.GetUserHandle(m.Author.ID)
+	if err == sql.ErrNoRows {
+		s.ChannelMessageSend(m.ChannelID, "You don't have a handle registered. Use the command `~register` `your_handle` to register a codeforces handle")
+		return
+	}
+
+	handle2, err := dbConn.GetUserHandle(opponent)
+	if err == sql.ErrNoRows {
+		s.ChannelMessageSend(m.ChannelID, "<@"+opponent+"> doesn't have a handle registered. Use the command `~register` `your_handle` to register a codeforces handle")
+		return
+	}
+
 	// checking if codeforces handles exists
-	if !util.UserExists([]string{args[1], args[2]}) {
+	if !util.UserExists([]string{handle1, handle2}) {
 		s.ChannelMessageSend(m.ChannelID, "Codeforces handle doesn't exist")
 		return
 	}
 
-	// adding to the challenging map
+	// adding to the challenging map the id of the opponent and the arguments (rating, tags)
 	challengeMap.RWMutex.Lock()
-	challengeMap.Map[m.Author.ID] = append([]string{opponent}, args[1:]...)
-	challengeMap.Map[opponent] = append([]string{"!" + m.Author.ID}, args[1:]...)
+	challengeMap.Map[m.Author.ID] = append([]string{opponent, handle1, handle2}, args[1:]...)
+	challengeMap.Map[opponent] = append([]string{"!" + m.Author.ID, handle1, handle2}, args[1:]...)
 	challengeMap.RWMutex.Unlock()
 
 	s.ChannelMessageSend(m.ChannelID, "<@"+m.Author.ID+"> is challenging <@"+opponent+">. Type `~accept` to accept the challenge")
@@ -134,7 +180,7 @@ func Accept(s *discordgo.Session, m *discordgo.MessageCreate, args []string, due
 	delete(challengeMap.Map, opponent)
 	challengeMap.RWMutex.Unlock()
 
-	s.ChannelMessageSend(m.ChannelID, "<@"+m.Author.ID+"> has accepted a challenge from <@"+opponent+">")
+	s.ChannelMessageSend(m.ChannelID, "<@"+m.Author.ID+"> has accepted a challenge from <@"+opponent+">\nInitiating the duel between "+challenger[1]+" and "+challenger[2]+"...")
 
 	fmt.Println(challenger, len(challenger))
 
@@ -214,7 +260,7 @@ func Accept(s *discordgo.Session, m *discordgo.MessageCreate, args []string, due
 
 	ms := &discordgo.MessageSend{
 		Embed: &discordgo.MessageEmbed{
-			Title: "TicTacToe",
+			Title: challenger[1] + " VS " + challenger[2],
 			Fields: []*discordgo.MessageEmbedField{
 				{
 					Name:   "Type `~update` to update game state",
@@ -353,7 +399,7 @@ func Update(s *discordgo.Session, m *discordgo.MessageCreate, args []string, due
 
 	ms := &discordgo.MessageSend{
 		Embed: &discordgo.MessageEmbed{
-			Title: "TicTacToe",
+			Title: state.Handles[0] + " VS " + state.Handles[1],
 			Fields: []*discordgo.MessageEmbedField{
 				{
 					Name:   "Type `~update` to update game state",
