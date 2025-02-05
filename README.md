@@ -15,7 +15,7 @@ Then, by solving one of the 9 problems, the corresponding spot on the tictactoe 
 - `help`: Display the help message
 - `register` `codeforces_handle`: Register a codeforces handle for yourself
 - `handle`: Show your handle
-- `challenge` `@opponent` `your handle` `opponent's handle` `rating` `+tags` `~tags`: Challenge the `@opponent` to a tictactoe duel, with the given rating (leave empty for any rating), and criteria for tags included (+) and tags excluded (~)
+- `challenge` `@opponent` `rating (optional)` `+tags (optional)` `~tags (optional)`: Challenge the `@opponent` to a tictactoe duel, with the given rating (leave empty for any rating), and criteria for tags included (+) and tags excluded (~)
 - `accept`: Accept a challenge if you are being challenged
 - `end`: End a challenge or an ongoing duel
 - `update`: Update the current duel, which will update the board if the duelists solve more problems. Should be manually called from time to time.
